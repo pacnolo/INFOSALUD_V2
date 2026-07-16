@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <article class="tarjeta-directorio">
 
                     <div class="directorio-icono">
-                        <i class="fa-solid fa-user"></i>
+              <i class="bi bi-clipboard2-pulse-fill"></i>
                     </div>
 
                     <div class="directorio-datos">
