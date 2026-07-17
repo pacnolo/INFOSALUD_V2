@@ -1293,8 +1293,10 @@ img {
         width: 94%;
     }
 
-    .logo-encabezado img {
-        width: 150px;
+   .logo-encabezado img{
+        width:58px;
+        max-width:100%;
+        transform:none;
     }
 
     .identidad-contenido {
@@ -2070,8 +2072,8 @@ border: 2px solid #0A6A4A;
 }
 
 .directorio-icono {
-    width: 52px;
-    height: 52px;
+    width: 62px;
+    height: 62px;
 
     flex-shrink: 0;
 
@@ -2083,7 +2085,7 @@ border: 2px solid #0A6A4A;
     background: var(--verde);
     color: var(--blanco);
 
-    font-size: 22px;
+    font-size: 50px;
 }
 
 .directorio-datos h2 {
@@ -2355,3 +2357,5 @@ border: 2px solid #0A6A4A;
 
     background:rgba(255,255,255,.25);
 }
+
+
