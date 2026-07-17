@@ -2,6 +2,17 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+
+    echo json_encode([
+        "ok" => false,
+        "mensaje" => "Método no permitido."
+    ], JSON_UNESCAPED_UNICODE);
+
+    exit;
+}
+
 $servidor = "11.254.16.103";
 $baseDatos = "DBTRABAJODIS";
 
@@ -17,8 +28,8 @@ if ($conexion === false) {
     echo json_encode([
         "ok" => false,
         "mensaje" => "No fue posible conectar con SQL Server.",
-        "errores" => sqlsrv_errors()
-    ], JSON_UNESCAPED_UNICODE);
+        "erroresSQL" => sqlsrv_errors()
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
     exit;
 }
@@ -32,12 +43,8 @@ if (!is_array($datos)) {
 
 $pagina = $datos["pagina"] ?? "index.html";
 $bloque = $datos["bloque"] ?? null;
-$usuarioPortal = $datos["usuario"] ?? null;
-$equipo = $datos["equipo"] ?? null;
-
 $ip = $_SERVER["REMOTE_ADDR"] ?? null;
 $navegador = $_SERVER["HTTP_USER_AGENT"] ?? null;
-
 $sistemaOperativo = $datos["sistemaOperativo"] ?? null;
 $resolucion = $datos["resolucion"] ?? null;
 
@@ -46,21 +53,17 @@ $sql = "
     (
         Pagina,
         Bloque,
-        Usuario,
-        Equipo,
         IP,
         Navegador,
         SistemaOperativo,
         Resolucion
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
 ";
 
 $parametros = [
     $pagina,
     $bloque,
-    $usuarioPortal,
-    $equipo,
     $ip,
     $navegador,
     $sistemaOperativo,
@@ -79,31 +82,40 @@ if ($resultado === false) {
     echo json_encode([
         "ok" => false,
         "mensaje" => "No fue posible registrar la visita.",
-        "errores" => sqlsrv_errors()
-    ], JSON_UNESCAPED_UNICODE);
+        "erroresSQL" => sqlsrv_errors(),
+        "parametros" => $parametros
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
     sqlsrv_close($conexion);
     exit;
 }
 
 $sqlTotal = "
-    SELECT COUNT(*) AS Total
+    SELECT COUNT_BIG(*) AS Total
     FROM dbo.Portal_Visitas
 ";
 
 $consultaTotal = sqlsrv_query($conexion, $sqlTotal);
-$total = 0;
 
-if ($consultaTotal !== false) {
-    $fila = sqlsrv_fetch_array(
-        $consultaTotal,
-        SQLSRV_FETCH_ASSOC
-    );
+if ($consultaTotal === false) {
+    http_response_code(500);
 
-    if ($fila) {
-        $total = (int) $fila["Total"];
-    }
+    echo json_encode([
+        "ok" => false,
+        "mensaje" => "La visita se registró, pero no fue posible obtener el total.",
+        "erroresSQL" => sqlsrv_errors()
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+    sqlsrv_close($conexion);
+    exit;
 }
+
+$fila = sqlsrv_fetch_array(
+    $consultaTotal,
+    SQLSRV_FETCH_ASSOC
+);
+
+$total = $fila ? (int) $fila["Total"] : 0;
 
 echo json_encode([
     "ok" => true,
@@ -111,4 +123,6 @@ echo json_encode([
     "totalVisitas" => $total
 ], JSON_UNESCAPED_UNICODE);
 
+sqlsrv_free_stmt($resultado);
+sqlsrv_free_stmt($consultaTotal);
 sqlsrv_close($conexion);
