@@ -2231,7 +2231,7 @@ border: 2px solid #0A6A4A;
     align-items: center;
     justify-content: flex-end;
 
-    gap: 30px;
+    gap: 20px;
 
     margin: 0;
 } 
@@ -2243,7 +2243,7 @@ border: 2px solid #0A6A4A;
     color: #1d1f1e;
 
     
-    font-size:20px;
+    font-size:17px;
     font-weight: 600;
 
     line-height: 1.2;
@@ -2254,9 +2254,9 @@ border: 2px solid #0A6A4A;
     display: flex;
     align-items: center;
 
-    gap: 10px;
+    gap: 8px;
 
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
 
     white-space: nowrap;
@@ -2265,12 +2265,12 @@ border: 2px solid #0A6A4A;
 
 .contador-visitas i {
     color: #166d5b;
-    font-size: 20px;
+    font-size: 17px;
 }
 
 .contador-visitas strong {
     color: #166d5b;
-    font-size: 25px;
+    font-size: 22px;
 }
 
 /* Buscador */
