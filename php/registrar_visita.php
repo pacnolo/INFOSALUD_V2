@@ -2,15 +2,11 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-$servidor = "NOMBRE_SERVIDOR";
+$servidor = "11.254.16.103";
 $baseDatos = "DBTRABAJODIS";
-$usuario = "USUARIO_SQL";
-$contrasena = "CONTRASENA_SQL";
 
 $conexion = sqlsrv_connect($servidor, [
     "Database" => $baseDatos,
-    "UID" => $usuario,
-    "PWD" => $contrasena,
     "CharacterSet" => "UTF-8",
     "TrustServerCertificate" => true
 ]);
@@ -22,19 +18,26 @@ if ($conexion === false) {
         "ok" => false,
         "mensaje" => "No fue posible conectar con SQL Server.",
         "errores" => sqlsrv_errors()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     exit;
 }
 
-$datos = json_decode(file_get_contents("php://input"), true);
+$contenido = file_get_contents("php://input");
+$datos = json_decode($contenido, true);
+
+if (!is_array($datos)) {
+    $datos = [];
+}
 
 $pagina = $datos["pagina"] ?? "index.html";
 $bloque = $datos["bloque"] ?? null;
 $usuarioPortal = $datos["usuario"] ?? null;
 $equipo = $datos["equipo"] ?? null;
+
 $ip = $_SERVER["REMOTE_ADDR"] ?? null;
 $navegador = $_SERVER["HTTP_USER_AGENT"] ?? null;
+
 $sistemaOperativo = $datos["sistemaOperativo"] ?? null;
 $resolucion = $datos["resolucion"] ?? null;
 
@@ -64,7 +67,11 @@ $parametros = [
     $resolucion
 ];
 
-$resultado = sqlsrv_query($conexion, $sql, $parametros);
+$resultado = sqlsrv_query(
+    $conexion,
+    $sql,
+    $parametros
+);
 
 if ($resultado === false) {
     http_response_code(500);
@@ -73,7 +80,7 @@ if ($resultado === false) {
         "ok" => false,
         "mensaje" => "No fue posible registrar la visita.",
         "errores" => sqlsrv_errors()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     sqlsrv_close($conexion);
     exit;
@@ -87,13 +94,21 @@ $sqlTotal = "
 $consultaTotal = sqlsrv_query($conexion, $sqlTotal);
 $total = 0;
 
-if ($consultaTotal !== false && $fila = sqlsrv_fetch_array($consultaTotal, SQLSRV_FETCH_ASSOC)) {
-    $total = (int) $fila["Total"];
+if ($consultaTotal !== false) {
+    $fila = sqlsrv_fetch_array(
+        $consultaTotal,
+        SQLSRV_FETCH_ASSOC
+    );
+
+    if ($fila) {
+        $total = (int) $fila["Total"];
+    }
 }
 
 echo json_encode([
     "ok" => true,
+    "mensaje" => "Visita registrada correctamente.",
     "totalVisitas" => $total
-]);
+], JSON_UNESCAPED_UNICODE);
 
 sqlsrv_close($conexion);
