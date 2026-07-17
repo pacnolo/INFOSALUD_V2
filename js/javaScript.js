@@ -201,6 +201,12 @@ botonesBloques.forEach((boton) => {
                 "true"
             );
 
+    const tituloBloque =
+        bloqueActual.querySelector(
+            ".bloque-titulo strong"
+        )?.textContent.trim() ||
+        "Bloque sin nombre";
+    registrarVisita(tituloBloque);
         }
 
     });
@@ -368,37 +374,95 @@ actualizarFechaHora();
 
 setInterval(actualizarFechaHora,1000);
 
-
 /*******************************************
-    CONTADOR DE VISITAS
+    REGISTRO Y CONTADOR DE VISITAS EN SQL
 *******************************************/
-(function(){
+async function registrarVisita(bloque = null) {
 
     const elemento = document.getElementById("numeroVisitas");
 
-    if(!elemento) return;
+    try {
 
-    const CLAVE_VISITAS = "contadorVisitasPortal";
-    const CLAVE_SESION  = "visitaRegistrada";
+        const datosVisita = {
+            pagina: window.location.pathname || "index.html",
+            bloque: bloque,
+            usuario: null,
+            equipo: null,
+            sistemaOperativo: navigator.platform || null,
+            resolucion:
+                `${window.screen.width}x${window.screen.height}`
+        };
 
-    let visitas = Number(localStorage.getItem(CLAVE_VISITAS)) || 0;
+        const respuesta = await fetch(
+            "./php/registrar_visita.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(datosVisita)
+            }
+        );
 
-    if(!sessionStorage.getItem(CLAVE_SESION)){
+        const textoRespuesta = await respuesta.text();
 
-        visitas++;
+        let resultado;
 
-        localStorage.setItem(CLAVE_VISITAS, visitas);
+        try {
+            resultado = JSON.parse(textoRespuesta);
+        } catch (error) {
+            throw new Error(
+                `La respuesta del servidor no es JSON: ${textoRespuesta}`
+            );
+        }
 
-        sessionStorage.setItem(CLAVE_SESION, "SI");
+   if (!respuesta.ok || !resultado.ok) {
+
+    console.error("Respuesta completa del PHP:", resultado);
+
+    const detalleSQL = resultado.erroresSQL
+        ? JSON.stringify(resultado.erroresSQL, null, 2)
+        : "";
+
+    throw new Error(
+        `${resultado.mensaje || "No fue posible registrar la visita."} ${detalleSQL}`
+    );
+}
+
+        if (elemento) {
+            elemento.textContent =
+                Number(resultado.totalVisitas)
+                    .toLocaleString("es-MX");
+        }
+
+        console.log(
+            "Visita registrada correctamente:",
+            resultado
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error al registrar la visita:",
+            error
+        );
+
+        if (elemento) {
+            elemento.textContent = "—";
+        }
 
     }
 
-    elemento.textContent = visitas.toLocaleString("es-MX");
-
-})();
+}
 
 
 /*******************************************
     BUSCADOR
 *******************************************/
-filtrarContenido();
+document.addEventListener("DOMContentLoaded", () => {
+
+    filtrarContenido();
+
+    registrarVisita("Entrada al portal");
+
+});
